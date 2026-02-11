@@ -1,21 +1,22 @@
 # Document Beautifier
 
-Generischer Whitepaper-Styler mit Frontend-Konfigurator:
+Web-Tool für DOCX-Whitepaper:
 - Dokument hochladen
 - Logo hochladen
 - Farben definieren
-- Vorlage wählen (`minimal`, `executive`, `bold`)
+- Vorlage wählen
+- **direkt im Tool DOCX erzeugen + herunterladen**
 
-## Lokal starten (Frontend)
+## Lokal testen (Frontend)
 
 ```bash
 cd "/Users/davidwegener/Desktop/Dokument-hübsch-Macher"
 python3 -m http.server 4310
 ```
 
-Dann im Browser: `http://localhost:4310`
+Dann: `http://localhost:4310`
 
-## DOCX-Styling ausführen (CLI)
+## Lokal testen (CLI)
 
 ```bash
 python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.py" \
@@ -24,11 +25,10 @@ python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.p
   --template executive \
   --primary-color "#F50000" \
   --text-color "#111111" \
-  --org-name "GRUENEWALD GmbH" \
+  --org-name "Your Organization" \
   --logo "/ABSOLUTER/PFAD/logo.png"
 ```
 
 ## Deploy auf Vercel
 
-Das Frontend ist statisch und direkt Vercel-kompatibel.
-Push nach GitHub, danach in Vercel `New Project` -> Repo wählen -> `Deploy`.
+Projekt ist auf Vercel für statisches Frontend + Python API (`/api/style`) vorbereitet.

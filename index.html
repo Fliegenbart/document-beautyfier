@@ -20,7 +20,7 @@
         <div>
           <p class="kicker">Whitepaper Workflow</p>
           <h1>Document Beautifier</h1>
-          <p class="sub">DOCX laden, Logo setzen, Farben definieren, Vorlage wählen.</p>
+          <p class="sub">DOCX laden, Logo setzen, Farben definieren, Vorlage wählen und direkt herunterladen.</p>
         </div>
       </header>
 
@@ -29,29 +29,19 @@
         <div class="grid two">
           <label class="field upload">
             <span>Dokument hochladen (.docx)</span>
-            <input id="docFile" type="file" accept=".docx" />
+            <input id="docFile" type="file" accept=".docx" required />
             <small id="docFileName">Keine Datei gewählt</small>
           </label>
 
           <label class="field upload">
-            <span>Logo hochladen (PNG/JPG)</span>
+            <span>Logo hochladen (PNG/JPG, optional)</span>
             <input id="logoFile" type="file" accept=".png,.jpg,.jpeg" />
             <small id="logoFileName">Kein Logo gewählt</small>
           </label>
 
           <label class="field">
-            <span>Input DOCX Pfad (für Terminal)</span>
-            <input id="inputDocxPath" type="text" placeholder="/Users/.../input.docx" />
-          </label>
-
-          <label class="field">
-            <span>Logo Pfad (optional)</span>
-            <input id="logoPath" type="text" placeholder="/Users/.../logo.png" />
-          </label>
-
-          <label class="field">
-            <span>Output DOCX Pfad</span>
-            <input id="outputDocxPath" type="text" value="/Users/davidwegener/Desktop/Dokument-hübsch-Macher/output_styled.docx" />
+            <span>Output-Dateiname</span>
+            <input id="outputName" type="text" value="document_styled.docx" />
           </label>
 
           <div class="logo-preview-wrap">
@@ -77,8 +67,8 @@
           </label>
 
           <label class="field">
-            <span>Organisationsname (Fallback ohne Logo)</span>
-            <input id="orgName" type="text" value="GRUENEWALD GmbH" />
+            <span>Organisation (Fallback ohne Logo)</span>
+            <input id="orgName" type="text" value="Your Organization" />
           </label>
         </div>
       </section>
@@ -105,11 +95,11 @@
       </section>
 
       <section class="card output">
-        <h2>4. Ausführen</h2>
-        <p class="hint">Die Web-App erzeugt den Terminal-Befehl. Die Verarbeitung läuft lokal über `style_whitepaper.py`.</p>
-        <pre id="commandBox"></pre>
+        <h2>4. Erzeugen & Download</h2>
+        <p class="hint">Das Dokument wird serverseitig erzeugt und automatisch heruntergeladen.</p>
         <div class="actions">
-          <button id="copyBtn" type="button">Befehl kopieren</button>
+          <button id="generateBtn" type="button">Dokument erzeugen</button>
+          <span id="statusText"></span>
         </div>
       </section>
     </main>

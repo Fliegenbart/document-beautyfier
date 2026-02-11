@@ -4,18 +4,15 @@ const docFileName = document.getElementById('docFileName');
 const logoFileName = document.getElementById('logoFileName');
 const logoPreview = document.getElementById('logoPreview');
 
-const inputDocxPath = document.getElementById('inputDocxPath');
-const outputDocxPath = document.getElementById('outputDocxPath');
-const logoPath = document.getElementById('logoPath');
+const outputName = document.getElementById('outputName');
 const orgName = document.getElementById('orgName');
-
 const primaryColor = document.getElementById('primaryColor');
 const textColor = document.getElementById('textColor');
 const primaryColorLabel = document.getElementById('primaryColorLabel');
 const textColorLabel = document.getElementById('textColorLabel');
 
-const commandBox = document.getElementById('commandBox');
-const copyBtn = document.getElementById('copyBtn');
+const generateBtn = document.getElementById('generateBtn');
+const statusText = document.getElementById('statusText');
 const templateGrid = document.getElementById('templateGrid');
 
 function selectedTemplate() {
@@ -29,25 +26,22 @@ function refreshTemplateCardState() {
   });
 }
 
-function ensurePathDefaultsFromFiles() {
+function updateVisualTheme() {
+  document.documentElement.style.setProperty('--accent', primaryColor.value);
+  document.documentElement.style.setProperty('--ink', textColor.value);
+  primaryColorLabel.textContent = primaryColor.value;
+  textColorLabel.textContent = textColor.value;
+}
+
+function updateFileLabels() {
   const doc = docFile.files?.[0];
   const logo = logoFile.files?.[0];
 
-  if (doc) {
-    docFileName.textContent = doc.name;
-    if (!inputDocxPath.value.trim()) {
-      inputDocxPath.value = `/ABSOLUTER/PFAD/${doc.name}`;
-    }
-    if (!outputDocxPath.value.includes('_styled.docx')) {
-      outputDocxPath.value = `/ABSOLUTER/PFAD/${doc.name.replace(/\.docx$/i, '')}_styled.docx`;
-    }
-  }
+  docFileName.textContent = doc ? doc.name : 'Keine Datei gewählt';
+  logoFileName.textContent = logo ? logo.name : 'Kein Logo gewählt';
 
-  if (logo) {
-    logoFileName.textContent = logo.name;
-    if (!logoPath.value.trim()) {
-      logoPath.value = `/ABSOLUTER/PFAD/${logo.name}`;
-    }
+  if (doc && (!outputName.value || outputName.value === 'document_styled.docx')) {
+    outputName.value = doc.name.replace(/\.docx$/i, '') + '_styled.docx';
   }
 }
 
@@ -67,70 +61,91 @@ function updateLogoPreview() {
   reader.readAsDataURL(file);
 }
 
-function updateVisualTheme() {
-  document.documentElement.style.setProperty('--accent', primaryColor.value);
-  document.documentElement.style.setProperty('--ink', textColor.value);
-  primaryColorLabel.textContent = primaryColor.value;
-  textColorLabel.textContent = textColor.value;
+function setStatus(message, isError = false) {
+  statusText.textContent = message;
+  statusText.classList.toggle('error', isError);
 }
 
-function updateCommand() {
-  const input = inputDocxPath.value.trim() || '/ABSOLUTER/PFAD/input.docx';
-  const output = outputDocxPath.value.trim() || '/ABSOLUTER/PFAD/output_styled.docx';
-  const logo = logoPath.value.trim();
-  const template = selectedTemplate();
-  const org = orgName.value.trim() || 'Meine Organisation';
-
-  const lines = [
-    'python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.py"',
-    `  "${input}"`,
-    `  "${output}"`,
-    `  --template ${template}`,
-    `  --primary-color "${primaryColor.value}"`,
-    `  --text-color "${textColor.value}"`,
-    `  --org-name "${org.replace(/"/g, '\\"')}"`
-  ];
-
-  if (logo) {
-    lines.push(`  --logo "${logo}"`);
+async function generateDocument() {
+  const doc = docFile.files?.[0];
+  if (!doc) {
+    setStatus('Bitte zuerst ein DOCX hochladen.', true);
+    return;
   }
 
-  commandBox.textContent = lines.join(' \\\n');
+  const form = new FormData();
+  form.append('document', doc);
+
+  const logo = logoFile.files?.[0];
+  if (logo) {
+    form.append('logo', logo);
+  }
+
+  form.append('outputName', outputName.value.trim() || 'document_styled.docx');
+  form.append('orgName', orgName.value.trim() || 'Your Organization');
+  form.append('template', selectedTemplate());
+  form.append('primaryColor', primaryColor.value);
+  form.append('textColor', textColor.value);
+
+  generateBtn.disabled = true;
+  setStatus('Erzeuge Dokument...');
+
+  try {
+    const response = await fetch('/api/style', {
+      method: 'POST',
+      body: form
+    });
+
+    if (!response.ok) {
+      let message = 'Erzeugung fehlgeschlagen.';
+      try {
+        const payload = await response.json();
+        if (payload?.error) message = payload.error;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const downloadName = outputName.value.trim() || 'document_styled.docx';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = downloadName.toLowerCase().endsWith('.docx') ? downloadName : `${downloadName}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    setStatus('Fertig. Download gestartet.');
+  } catch (error) {
+    setStatus(error.message || 'Fehler bei der Verarbeitung.', true);
+  } finally {
+    generateBtn.disabled = false;
+  }
 }
 
-function handleInputChange() {
-  ensurePathDefaultsFromFiles();
-  updateLogoPreview();
-  refreshTemplateCardState();
-  updateVisualTheme();
-  updateCommand();
-}
+[docFile, logoFile].forEach((el) =>
+  el.addEventListener('change', () => {
+    updateFileLabels();
+    updateLogoPreview();
+  })
+);
 
-[
-  docFile,
-  logoFile,
-  inputDocxPath,
-  outputDocxPath,
-  logoPath,
-  orgName,
-  primaryColor,
-  textColor
-].forEach((el) => el.addEventListener('input', handleInputChange));
+[primaryColor, textColor].forEach((el) =>
+  el.addEventListener('input', () => {
+    updateVisualTheme();
+  })
+);
 
 document.querySelectorAll('input[name="template"]').forEach((el) => {
-  el.addEventListener('change', handleInputChange);
+  el.addEventListener('change', refreshTemplateCardState);
 });
 
-copyBtn.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(commandBox.textContent);
-    copyBtn.textContent = 'Kopiert';
-    setTimeout(() => {
-      copyBtn.textContent = 'Befehl kopieren';
-    }, 1200);
-  } catch {
-    copyBtn.textContent = 'Manuell kopieren';
-  }
-});
+generateBtn.addEventListener('click', generateDocument);
 
-handleInputChange();
+updateVisualTheme();
+refreshTemplateCardState();
+updateFileLabels();
+updateLogoPreview();

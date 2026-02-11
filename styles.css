@@ -212,21 +212,11 @@ code {
   background: color-mix(in srgb, var(--accent) 4%, white);
 }
 
-pre {
-  margin: 0.9rem 0;
-  background: #0f1113;
-  color: #e8edf2;
-  border-radius: 12px;
-  border: 1px solid #22272c;
-  padding: 0.85rem;
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 0.88rem;
-  white-space: pre-wrap;
-}
-
 .actions {
+  margin-top: 0.8rem;
   display: flex;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 button {
@@ -235,12 +225,22 @@ button {
   background: var(--accent);
   color: white;
   font: 700 0.92rem/1 "Source Sans 3", sans-serif;
-  padding: 0.72rem 0.95rem;
+  padding: 0.78rem 1rem;
   cursor: pointer;
 }
 
-button:hover {
-  filter: brightness(0.95);
+button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+#statusText {
+  font-weight: 600;
+  color: #2f2f2f;
+}
+
+#statusText.error {
+  color: #a10f0f;
 }
 
 @media (max-width: 860px) {
