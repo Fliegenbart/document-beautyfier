@@ -1,0 +1,159 @@
+:root {
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --ink: #111111;
+  --muted: #5d5d5d;
+  --accent: rgb(245, 0, 0);
+  --accent-soft: rgba(245, 0, 0, 0.1);
+  --line: #e7e7e7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Work Sans", Arial, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(160deg, #f2f2f2 0%, #ececec 45%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 85% 5%, rgba(245, 0, 0, 0.12), transparent 38%),
+    radial-gradient(circle at 12% 88%, rgba(0, 0, 0, 0.05), transparent 42%);
+  pointer-events: none;
+}
+
+.shell {
+  width: min(940px, calc(100% - 2rem));
+  margin: 2.5rem auto;
+  display: grid;
+  gap: 1rem;
+  position: relative;
+}
+
+.brand-card,
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.15rem 1.2rem;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.06);
+}
+
+.brand-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-mark {
+  width: 76px;
+  height: 66px;
+  background: conic-gradient(from 180deg at 50% 67%, transparent 0 23%, var(--accent) 23% 100%);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  border-radius: 4px;
+}
+
+.brand-text h1 {
+  margin: 0;
+  font: 700 2rem/1 "Space Grotesk", sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.brand-text p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+
+.eyebrow {
+  display: inline-flex;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+h2,
+h3 {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0.55rem 0 0.6rem;
+}
+
+.intro p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.75rem;
+  font: inherit;
+}
+
+input:focus {
+  outline: 2px solid rgba(245, 0, 0, 0.25);
+  border-color: var(--accent);
+}
+
+pre {
+  margin: 1rem 0 0.8rem;
+  border: 1px solid #ffd5d5;
+  background: #fff7f7;
+  color: #7f0202;
+  border-radius: 12px;
+  padding: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+button {
+  border: 0;
+  background: var(--accent);
+  color: white;
+  font: 600 0.94rem/1 "Work Sans", sans-serif;
+  padding: 0.72rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.94);
+}
+
+ol {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  padding-left: 1.1rem;
+}
+
+@media (max-width: 620px) {
+  .brand-text h1 {
+    font-size: 1.45rem;
+  }
+
+  .logo-mark {
+    width: 56px;
+    height: 48px;
+  }
+}

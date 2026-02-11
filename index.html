@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gruenewald Whitepaper Styler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-bg"></div>
+    <main class="shell">
+      <header class="brand-card">
+        <div class="logo-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <h1>GRUENEWALD</h1>
+          <p>Whitepaper Styling Console</p>
+        </div>
+      </header>
+
+      <section class="card intro">
+        <span class="eyebrow">Business-like Automatisierung</span>
+        <h2>DOCX-Whitepaper in Sekunden sauber gestalten</h2>
+        <p>
+          Nutzt Corporate Red <strong>RGB(245, 0, 0)</strong>, setzt Header/Typografie,
+          formatiert Tabellen und fügt optional euer Logo ein.
+        </p>
+      </section>
+
+      <section class="card">
+        <h3>Befehl-Generator</h3>
+        <div class="grid">
+          <label>
+            Input DOCX (absoluter Pfad)
+            <input id="inputDocx" type="text" value="/Users/davidwegener/Desktop/Whitepaper_KI_Validierung_Siemens_Gruenewald_final_DW.docx" />
+          </label>
+          <label>
+            Output DOCX (absoluter Pfad)
+            <input id="outputDocx" type="text" value="/Users/davidwegener/Desktop/Dokument-hübsch-Macher/Whitepaper_styled.docx" />
+          </label>
+          <label>
+            Logo-Datei (PNG/JPG, optional)
+            <input id="logoPath" type="text" placeholder="/Users/.../gruenewald_logo.png" />
+          </label>
+        </div>
+        <pre id="commandBox"></pre>
+        <button id="copyBtn" type="button">Befehl kopieren</button>
+      </section>
+
+      <section class="card">
+        <h3>1-Minute Setup</h3>
+        <ol>
+          <li>Repository nach GitHub pushen.</li>
+          <li>In Vercel: <em>New Project</em> -> Repo auswählen -> Deploy.</li>
+          <li>Terminal lokal öffnen und den generierten Befehl ausführen.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
