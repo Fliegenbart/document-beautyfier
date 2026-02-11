@@ -1,8 +1,12 @@
-# Gruenewald Whitepaper Frontend
+# Document Beautifier
 
-Schlankes Frontend für deine Whitepaper-Styling-Maschine (`style_whitepaper.py`), optimiert für GitHub + Vercel.
+Generischer Whitepaper-Styler mit Frontend-Konfigurator:
+- Dokument hochladen
+- Logo hochladen
+- Farben definieren
+- Vorlage wählen (`minimal`, `executive`, `bold`)
 
-## Lokal testen
+## Lokal starten (Frontend)
 
 ```bash
 cd "/Users/davidwegener/Desktop/Dokument-hübsch-Macher"
@@ -11,30 +15,20 @@ python3 -m http.server 4310
 
 Dann im Browser: `http://localhost:4310`
 
-## Deployment mit GitHub + Vercel
-
-```bash
-cd "/Users/davidwegener/Desktop/Dokument-hübsch-Macher"
-git init
-git add .
-git commit -m "Add slim frontend for whitepaper styler"
-git branch -M main
-git remote add origin <DEIN_GITHUB_REPO_URL>
-git push -u origin main
-```
-
-Danach in Vercel:
-1. New Project
-2. GitHub Repo auswählen
-3. Deploy klicken
-
-## Whitepaper Styling ausführen
-
-Die Website erzeugt nur den Terminal-Befehl; das eigentliche Styling läuft lokal mit Python:
+## DOCX-Styling ausführen (CLI)
 
 ```bash
 python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.py" \
-  "/Users/davidwegener/Desktop/Whitepaper_KI_Validierung_Siemens_Gruenewald_final_DW.docx" \
-  "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/Whitepaper_styled.docx" \
-  --logo "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/gruenewald_logo.png"
+  "/ABSOLUTER/PFAD/input.docx" \
+  "/ABSOLUTER/PFAD/output_styled.docx" \
+  --template executive \
+  --primary-color "#F50000" \
+  --text-color "#111111" \
+  --org-name "GRUENEWALD GmbH" \
+  --logo "/ABSOLUTER/PFAD/logo.png"
 ```
+
+## Deploy auf Vercel
+
+Das Frontend ist statisch und direkt Vercel-kompatibel.
+Push nach GitHub, danach in Vercel `New Project` -> Repo wählen -> `Deploy`.
