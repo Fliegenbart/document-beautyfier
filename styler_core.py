@@ -397,7 +397,7 @@ def apply_style_pdf(
     # Cover
     story.append(Spacer(1, 1.4 * cm))
     if logo and logo.exists():
-        story.append(Image(str(logo), width=cfg.logo_width_cm * cm, preserveAspectRatio=True, hAlign="CENTER"))
+        story.append(Image(str(logo), width=cfg.logo_width_cm * cm, hAlign="CENTER"))
         story.append(Spacer(1, 0.8 * cm))
     story.append(Paragraph(title, styles["cover_title"]))
     story.append(Paragraph(org_name, styles["cover_sub"]))
