@@ -5,6 +5,7 @@ Web-Tool fuer Whitepaper-Transformation:
 - optionales Logo
 - Farbdefinitionen
 - Template-Auswahl (`minimal`, `executive`, `bold`)
+- PDF-Themes (`consulting`, `technical`, `regulatory`)
 - Ausgabe als **DOCX oder hochwertiges PDF**
 - Best-practice Defaults:
   - Lesebreite fuer Fliesstext (ca. 72 Zeichen)
@@ -37,6 +38,7 @@ python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.p
 - `logo` (optional)
 - `outputFormat`: `docx` | `pdf`
 - `template`, `primaryColor`, `textColor`, `orgName`, `outputName`
+- `pdfTheme` (`consulting` | `technical` | `regulatory`)
 - `lineSpacing`, `readingWidthCh`, `includeSummaryPage`
 
 Antwort: Binardatei als Download.

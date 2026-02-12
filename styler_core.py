@@ -38,10 +38,51 @@ class TemplateConfig:
     logo_width_cm: float
 
 
+@dataclass
+class PdfThemeConfig:
+    default_font: str
+    cover_tagline: str
+    summary_fill_hex: str
+    table_row_fill_a: str
+    table_row_fill_b: str
+    footer_color_hex: str
+    cover_rule_height_cm: float
+
+
 TEMPLATES = {
     "minimal": TemplateConfig(2.4, 10.8, 19, 14, 12.5, 25, 1.13, "8", 4.8),
     "executive": TemplateConfig(2.1, 11, 20, 15, 13, 28, 1.15, "12", 5.5),
     "bold": TemplateConfig(1.8, 11.2, 22, 16, 14, 30, 1.2, "16", 6.0),
+}
+
+PDF_THEMES = {
+    "consulting": PdfThemeConfig(
+        default_font="Helvetica",
+        cover_tagline="Business Strategy Whitepaper",
+        summary_fill_hex="F6F8FB",
+        table_row_fill_a="FFFFFF",
+        table_row_fill_b="F6F8FA",
+        footer_color_hex="666666",
+        cover_rule_height_cm=0.24,
+    ),
+    "technical": PdfThemeConfig(
+        default_font="Helvetica",
+        cover_tagline="Technical Whitepaper",
+        summary_fill_hex="F3F7FC",
+        table_row_fill_a="F9FBFE",
+        table_row_fill_b="EDF4FB",
+        footer_color_hex="4F5E72",
+        cover_rule_height_cm=0.2,
+    ),
+    "regulatory": PdfThemeConfig(
+        default_font="Times-Roman",
+        cover_tagline="Regulatory Assessment Whitepaper",
+        summary_fill_hex="FAF7F2",
+        table_row_fill_a="FFFEFC",
+        table_row_fill_b="F7F1E9",
+        footer_color_hex="5E5348",
+        cover_rule_height_cm=0.22,
+    ),
 }
 
 
@@ -299,7 +340,14 @@ def _extract_doc_title(doc: Document) -> str:
     return "Styled Document"
 
 
-def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateConfig, line_spacing: float):
+def _build_pdf_styles(
+    font: str,
+    primary_hex: str,
+    text_hex: str,
+    cfg: TemplateConfig,
+    line_spacing: float,
+    pdf_theme: PdfThemeConfig,
+):
     primary = HexColor(f"#{primary_hex}")
     text = HexColor(f"#{text_hex}")
     sheet = getSampleStyleSheet()
@@ -361,12 +409,21 @@ def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateC
             textColor=text,
             alignment=1,
         ),
+        "cover_tagline": ParagraphStyle(
+            "cover_tagline",
+            parent=sheet["Normal"],
+            fontName=font,
+            fontSize=cfg.body_size - 0.3,
+            textColor=colors.HexColor("#777777"),
+            alignment=1,
+            spaceAfter=8,
+        ),
         "footer": ParagraphStyle(
             "footer",
             parent=sheet["Normal"],
             fontName=font,
             fontSize=8.5,
-            textColor=colors.HexColor("#666666"),
+            textColor=colors.HexColor(f"#{pdf_theme.footer_color_hex}"),
         ),
     }
 
@@ -411,6 +468,7 @@ def apply_style_pdf(
     logo: Path | None = None,
     org_name: str = "Your Organization",
     font: str = "Helvetica",
+    pdf_theme: str = "consulting",
     template: str = "executive",
     primary_color: str = "#F50000",
     text_color: str = "#111111",
@@ -420,10 +478,13 @@ def apply_style_pdf(
 ) -> None:
     if template not in TEMPLATES:
         raise ValueError(f"Unsupported template: {template}")
+    if pdf_theme not in PDF_THEMES:
+        raise ValueError(f"Unsupported pdf_theme: {pdf_theme}")
 
     primary_hex = normalize_color_string(primary_color)
     text_hex = normalize_color_string(text_color)
     cfg = TEMPLATES[template]
+    theme = PDF_THEMES[pdf_theme]
 
     doc = Document(str(input_docx))
     title = _extract_doc_title(doc)
@@ -432,7 +493,8 @@ def apply_style_pdf(
     if line_spacing < 1.4 or line_spacing > 2.0:
         raise ValueError("line_spacing should be between 1.4 and 2.0.")
 
-    styles = _build_pdf_styles(font, primary_hex, text_hex, cfg, line_spacing)
+    selected_font = font or theme.default_font
+    styles = _build_pdf_styles(selected_font, primary_hex, text_hex, cfg, line_spacing, theme)
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
@@ -459,6 +521,7 @@ def apply_style_pdf(
     if logo and logo.exists():
         story.append(Image(str(logo), width=cfg.logo_width_cm * cm, hAlign="CENTER"))
         story.append(Spacer(1, 0.8 * cm))
+    story.append(Paragraph(theme.cover_tagline, styles["cover_tagline"]))
     story.append(Paragraph(title, styles["cover_title"]))
     story.append(Paragraph(org_name, styles["cover_sub"]))
     story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
@@ -467,7 +530,7 @@ def apply_style_pdf(
         Table(
             [[" "]],
             colWidths=[rl_doc.width],
-            rowHeights=[0.25 * cm],
+            rowHeights=[theme.cover_rule_height_cm * cm],
             style=[("BACKGROUND", (0, 0), (-1, -1), primary), ("LINEBELOW", (0, 0), (-1, -1), 0, primary)],
         )
     )
@@ -481,7 +544,7 @@ def apply_style_pdf(
             [[Paragraph(summary, styles["body"])]],
             colWidths=[rl_doc.width],
             style=[
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F6F6F6")),
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(f"#{theme.summary_fill_hex}")),
                 ("BOX", (0, 0), (-1, -1), 0.8, primary),
                 ("LEFTPADDING", (0, 0), (-1, -1), 10),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 10),
@@ -525,13 +588,18 @@ def apply_style_pdf(
                     [
                         ("BACKGROUND", (0, 0), (-1, 0), primary),
                         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                        ("FONTNAME", (0, 0), (-1, -1), font),
+                        ("FONTNAME", (0, 0), (-1, -1), selected_font),
                         ("FONTSIZE", (0, 0), (-1, 0), 10),
                         ("FONTSIZE", (0, 1), (-1, -1), 9),
                         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#BBBBBB")),
                         ("ALIGN", (0, 0), (-1, 0), "LEFT"),
                         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#FAFAFA"), colors.white]),
+                        (
+                            "ROWBACKGROUNDS",
+                            (0, 1),
+                            (-1, -1),
+                            [colors.HexColor(f"#{theme.table_row_fill_a}"), colors.HexColor(f"#{theme.table_row_fill_b}")],
+                        ),
                         ("LEFTPADDING", (0, 0), (-1, -1), 6),
                         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
                         ("TOPPADDING", (0, 0), (-1, -1), 4),
@@ -549,7 +617,7 @@ def apply_style_pdf(
         canvas.setLineWidth(1)
         canvas.line(_doc.leftMargin, A4[1] - _doc.topMargin + 8, A4[0] - _doc.rightMargin, A4[1] - _doc.topMargin + 8)
         canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(colors.HexColor("#666666"))
+        canvas.setFillColor(colors.HexColor(f"#{theme.footer_color_hex}"))
         canvas.drawString(_doc.leftMargin, _doc.bottomMargin - 16, org_name)
         canvas.drawRightString(A4[0] - _doc.rightMargin, _doc.bottomMargin - 16, f"Page {canvas.getPageNumber()}")
         canvas.restoreState()

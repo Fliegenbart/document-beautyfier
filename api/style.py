@@ -39,6 +39,7 @@ def style_document():
     reading_width_ch = int(request.form.get("readingWidthCh", "72"))
     include_summary_page = request.form.get("includeSummaryPage", "true").lower() != "false"
     output_format = request.form.get("outputFormat", "docx").lower().strip()
+    pdf_theme = request.form.get("pdfTheme", "consulting")
     if output_format not in {"docx", "pdf"}:
         return jsonify({"error": "outputFormat must be 'docx' or 'pdf'."}), 400
 
@@ -66,6 +67,7 @@ def style_document():
                     logo=logo_path,
                     org_name=org_name,
                     font=font,
+                    pdf_theme=pdf_theme,
                     template=template,
                     primary_color=primary_color,
                     text_color=text_color,

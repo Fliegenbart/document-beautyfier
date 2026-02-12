@@ -5,6 +5,7 @@ const logoFileName = document.getElementById('logoFileName');
 const logoPreview = document.getElementById('logoPreview');
 
 const outputFormat = document.getElementById('outputFormat');
+const pdfTheme = document.getElementById('pdfTheme');
 const outputName = document.getElementById('outputName');
 const orgName = document.getElementById('orgName');
 const lineSpacing = document.getElementById('lineSpacing');
@@ -58,6 +59,7 @@ function updateFileLabels() {
 
 function updateOutputExtension() {
   const ext = outputFormat.value === 'pdf' ? 'pdf' : 'docx';
+  pdfTheme.disabled = outputFormat.value !== 'pdf';
   outputName.value = ensureExtension(outputName.value.trim() || `document_styled.${ext}`, ext);
 }
 
@@ -100,6 +102,7 @@ async function generateDocument() {
 
   form.append('outputName', outputName.value.trim() || `document_styled.${format}`);
   form.append('outputFormat', format);
+  form.append('pdfTheme', pdfTheme.value || 'consulting');
   form.append('orgName', orgName.value.trim() || 'Your Organization');
   form.append('template', selectedTemplate());
   form.append('primaryColor', primaryColor.value);
