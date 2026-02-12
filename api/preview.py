@@ -21,7 +21,9 @@ def _parse_bool(value: str | None, default: bool) -> bool:
 def _render_pdf_pages_to_base64_png(pdf_path: Path, max_pages: int = 3, max_width_px: int = 1100) -> tuple[int, list[dict]]:
     doc = fitz.open(pdf_path)
     pages = []
+    page_count = 0
     try:
+        page_count = doc.page_count
         n = min(max_pages, doc.page_count)
         for i in range(n):
             page = doc.load_page(i)
@@ -41,7 +43,7 @@ def _render_pdf_pages_to_base64_png(pdf_path: Path, max_pages: int = 3, max_widt
             )
     finally:
         doc.close()
-    return (doc.page_count, pages)
+    return (page_count, pages)
 
 
 @app.route("/", methods=["POST"])
