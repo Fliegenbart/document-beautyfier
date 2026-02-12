@@ -11,6 +11,7 @@ const orgName = document.getElementById('orgName');
 const lineSpacing = document.getElementById('lineSpacing');
 const readingWidthCh = document.getElementById('readingWidthCh');
 const includeSummaryPage = document.getElementById('includeSummaryPage');
+const useThemePalette = document.getElementById('useThemePalette');
 const primaryColor = document.getElementById('primaryColor');
 const textColor = document.getElementById('textColor');
 const primaryColorLabel = document.getElementById('primaryColorLabel');
@@ -19,6 +20,9 @@ const textColorLabel = document.getElementById('textColorLabel');
 const generateBtn = document.getElementById('generateBtn');
 const statusText = document.getElementById('statusText');
 const templateGrid = document.getElementById('templateGrid');
+const previewGrid = document.getElementById('previewGrid');
+
+let previewTimer = null;
 
 function selectedTemplate() {
   return document.querySelector('input[name="template"]:checked')?.value || 'minimal';
@@ -61,8 +65,9 @@ function updateOutputExtension() {
   const ext = outputFormat.value === 'pdf' ? 'pdf' : 'docx';
   const pdfMode = outputFormat.value === 'pdf';
   pdfTheme.disabled = outputFormat.value !== 'pdf';
-  primaryColor.disabled = pdfMode;
-  textColor.disabled = pdfMode;
+  const lockColors = pdfMode && useThemePalette.checked;
+  primaryColor.disabled = lockColors;
+  textColor.disabled = lockColors;
   outputName.value = ensureExtension(outputName.value.trim() || `document_styled.${ext}`, ext);
 }
 
@@ -87,6 +92,87 @@ function setStatus(message, isError = false) {
   statusText.classList.toggle('error', isError);
 }
 
+function buildFormData() {
+  const doc = docFile.files?.[0];
+  const format = outputFormat.value;
+  const form = new FormData();
+
+  if (doc) form.append('document', doc);
+
+  const logo = logoFile.files?.[0];
+  if (logo) form.append('logo', logo);
+
+  form.append('outputName', outputName.value.trim() || `document_styled.${format}`);
+  form.append('outputFormat', format);
+  form.append('pdfTheme', pdfTheme.value || 'consulting');
+  form.append('orgName', orgName.value.trim() || 'Your Organization');
+  form.append('template', selectedTemplate());
+
+  const usePalette = useThemePalette.checked && format === 'pdf';
+  form.append('primaryColor', usePalette ? 'auto' : primaryColor.value);
+  form.append('textColor', usePalette ? 'auto' : textColor.value);
+
+  form.append('lineSpacing', lineSpacing.value || '1.55');
+  form.append('readingWidthCh', readingWidthCh.value || '72');
+  form.append('includeSummaryPage', includeSummaryPage.checked ? 'true' : 'false');
+  return form;
+}
+
+function renderPreview(pages) {
+  previewGrid.innerHTML = '';
+  if (!pages || pages.length === 0) return;
+  pages.forEach((p) => {
+    const item = document.createElement('div');
+    item.className = 'preview-item';
+    const img = document.createElement('img');
+    img.src = `data:image/png;base64,${p.pngBase64}`;
+    img.alt = `Preview Seite ${p.page}`;
+    const cap = document.createElement('div');
+    cap.className = 'preview-caption';
+    cap.textContent = `Seite ${p.page}`;
+    item.appendChild(img);
+    item.appendChild(cap);
+    previewGrid.appendChild(item);
+  });
+}
+
+async function updatePreviewNow() {
+  const doc = docFile.files?.[0];
+  if (!doc) {
+    previewGrid.innerHTML = '';
+    return;
+  }
+  if (outputFormat.value !== 'pdf') {
+    previewGrid.innerHTML = '';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/preview', {
+      method: 'POST',
+      body: buildFormData()
+    });
+    if (!res.ok) {
+      let msg = 'Preview fehlgeschlagen.';
+      try {
+        const payload = await res.json();
+        if (payload?.error) msg = payload.error;
+      } catch {}
+      throw new Error(msg);
+    }
+    const payload = await res.json();
+    renderPreview(payload.pages);
+  } catch (e) {
+    previewGrid.innerHTML = '';
+    setStatus(e.message || 'Preview Fehler.', true);
+  }
+}
+
+function schedulePreview() {
+  if (previewTimer) window.clearTimeout(previewTimer);
+  previewTimer = window.setTimeout(updatePreviewNow, 650);
+}
+
 async function generateDocument() {
   const doc = docFile.files?.[0];
   if (!doc) {
@@ -95,24 +181,6 @@ async function generateDocument() {
   }
 
   const format = outputFormat.value;
-  const form = new FormData();
-  form.append('document', doc);
-
-  const logo = logoFile.files?.[0];
-  if (logo) {
-    form.append('logo', logo);
-  }
-
-  form.append('outputName', outputName.value.trim() || `document_styled.${format}`);
-  form.append('outputFormat', format);
-  form.append('pdfTheme', pdfTheme.value || 'consulting');
-  form.append('orgName', orgName.value.trim() || 'Your Organization');
-  form.append('template', selectedTemplate());
-  form.append('primaryColor', format === 'pdf' ? 'auto' : primaryColor.value);
-  form.append('textColor', format === 'pdf' ? 'auto' : textColor.value);
-  form.append('lineSpacing', lineSpacing.value || '1.55');
-  form.append('readingWidthCh', readingWidthCh.value || '72');
-  form.append('includeSummaryPage', includeSummaryPage.checked ? 'true' : 'false');
 
   generateBtn.disabled = true;
   setStatus('Erzeuge Dokument...');
@@ -120,7 +188,7 @@ async function generateDocument() {
   try {
     const response = await fetch('/api/style', {
       method: 'POST',
-      body: form
+      body: buildFormData()
     });
 
     if (!response.ok) {
@@ -160,22 +228,37 @@ async function generateDocument() {
   el.addEventListener('change', () => {
     updateFileLabels();
     updateLogoPreview();
+    schedulePreview();
   })
 );
 
 [primaryColor, textColor].forEach((el) =>
   el.addEventListener('input', () => {
     updateVisualTheme();
+    schedulePreview();
   })
 );
 
 outputFormat.addEventListener('change', () => {
   updateOutputExtension();
   updateFileLabels();
+  schedulePreview();
 });
 
 document.querySelectorAll('input[name="template"]').forEach((el) => {
-  el.addEventListener('change', refreshTemplateCardState);
+  el.addEventListener('change', () => {
+    refreshTemplateCardState();
+    schedulePreview();
+  });
+});
+
+pdfTheme.addEventListener('change', schedulePreview);
+lineSpacing.addEventListener('input', schedulePreview);
+readingWidthCh.addEventListener('input', schedulePreview);
+includeSummaryPage.addEventListener('change', schedulePreview);
+useThemePalette.addEventListener('change', () => {
+  updateOutputExtension();
+  schedulePreview();
 });
 
 generateBtn.addEventListener('click', generateDocument);
@@ -185,3 +268,4 @@ refreshTemplateCardState();
 updateFileLabels();
 updateLogoPreview();
 updateOutputExtension();
+schedulePreview();

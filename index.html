@@ -70,7 +70,7 @@
 
       <section class="card">
         <h2>2. Farben definieren</h2>
-        <p class="hint">Bei PDF gilt automatisch die feste Corporate-Farbpalette des gewählten Themes.</p>
+        <p class="hint">Default: PDF nutzt die feste Corporate-Palette des gewählten Themes. Du kannst sie optional überschreiben.</p>
         <div class="grid three">
           <label class="field color-field">
             <span>Primärfarbe</span>
@@ -90,6 +90,10 @@
           </label>
         </div>
         <div class="grid three">
+          <label class="field check">
+            <span>Theme-Palette nutzen (PDF)</span>
+            <input id="useThemePalette" type="checkbox" checked />
+          </label>
           <label class="field">
             <span>Zeilenabstand (1.4 - 2.0)</span>
             <input id="lineSpacing" type="number" min="1.4" max="2.0" step="0.05" value="1.55" />
@@ -133,6 +137,12 @@
           <button id="generateBtn" type="button">Dokument erzeugen</button>
           <span id="statusText"></span>
         </div>
+      </section>
+
+      <section class="card">
+        <h2>Preview</h2>
+        <p class="hint">Live-Vorschau (erste Seiten). Wird automatisch aktualisiert, wenn du Einstellungen änderst.</p>
+        <div id="previewGrid" class="preview-grid"></div>
       </section>
     </main>
 
