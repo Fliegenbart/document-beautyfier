@@ -6,17 +6,20 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_file
 
-from styler_core import apply_style
+from styler_core import apply_style, apply_style_pdf
 
 app = Flask(__name__)
 
 
-def _safe_out_name(name: str | None) -> str:
+def _safe_out_name(name: str | None, output_format: str) -> str:
+    default = "document_styled.pdf" if output_format == "pdf" else "document_styled.docx"
     if not name:
-        return "document_styled.docx"
-    cleaned = name.strip().replace("/", "_").replace("\\\\", "_")
-    if not cleaned.lower().endswith(".docx"):
-        cleaned += ".docx"
+        return default
+
+    cleaned = name.strip().replace("/", "_").replace("\\", "_")
+    ext = ".pdf" if output_format == "pdf" else ".docx"
+    if not cleaned.lower().endswith(ext):
+        cleaned += ext
     return cleaned
 
 
@@ -31,16 +34,19 @@ def style_document():
     primary_color = request.form.get("primaryColor", "#F50000")
     text_color = request.form.get("textColor", "#111111")
     org_name = request.form.get("orgName", "Your Organization")
-    font = request.form.get("font", "Calibri")
-    download_name = _safe_out_name(request.form.get("outputName"))
+    font = request.form.get("font", "Helvetica")
+    output_format = request.form.get("outputFormat", "docx").lower().strip()
+    if output_format not in {"docx", "pdf"}:
+        return jsonify({"error": "outputFormat must be 'docx' or 'pdf'."}), 400
 
+    download_name = _safe_out_name(request.form.get("outputName"), output_format)
     logo_file = request.files.get("logo")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp = Path(tmp_dir)
         input_docx = tmp / "input.docx"
-        output_docx = tmp / "output.docx"
         logo_path = None
+        output_file = tmp / ("output.pdf" if output_format == "pdf" else "output.docx")
 
         doc_file.save(str(input_docx))
 
@@ -50,24 +56,36 @@ def style_document():
             logo_file.save(str(logo_path))
 
         try:
-            apply_style(
-                input_docx=input_docx,
-                output_docx=output_docx,
-                logo=logo_path,
-                org_name=org_name,
-                font=font,
-                template=template,
-                primary_color=primary_color,
-                text_color=text_color,
-            )
+            if output_format == "pdf":
+                apply_style_pdf(
+                    input_docx=input_docx,
+                    output_pdf=output_file,
+                    logo=logo_path,
+                    org_name=org_name,
+                    font=font,
+                    template=template,
+                    primary_color=primary_color,
+                    text_color=text_color,
+                )
+            else:
+                apply_style(
+                    input_docx=input_docx,
+                    output_docx=output_file,
+                    logo=logo_path,
+                    org_name=org_name,
+                    font=font,
+                    template=template,
+                    primary_color=primary_color,
+                    text_color=text_color,
+                )
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": str(exc)}), 400
 
-        payload = io.BytesIO(output_docx.read_bytes())
+        payload = io.BytesIO(output_file.read_bytes())
         payload.seek(0)
-        return send_file(
-            payload,
-            as_attachment=True,
-            download_name=download_name,
-            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mimetype = (
+            "application/pdf"
+            if output_format == "pdf"
+            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
+        return send_file(payload, as_attachment=True, download_name=download_name, mimetype=mimetype)

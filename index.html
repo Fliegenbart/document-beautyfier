@@ -20,7 +20,7 @@
         <div>
           <p class="kicker">Whitepaper Workflow</p>
           <h1>Document Beautifier</h1>
-          <p class="sub">DOCX laden, Logo setzen, Farben definieren, Vorlage wählen und direkt herunterladen.</p>
+          <p class="sub">DOCX laden, Logo setzen, Farben definieren, Vorlage wählen und als DOCX oder PDF herunterladen.</p>
         </div>
       </header>
 
@@ -40,8 +40,16 @@
           </label>
 
           <label class="field">
+            <span>Output-Format</span>
+            <select id="outputFormat">
+              <option value="pdf" selected>PDF (designiert)</option>
+              <option value="docx">DOCX</option>
+            </select>
+          </label>
+
+          <label class="field">
             <span>Output-Dateiname</span>
-            <input id="outputName" type="text" value="document_styled.docx" />
+            <input id="outputName" type="text" value="document_styled.pdf" />
           </label>
 
           <div class="logo-preview-wrap">
@@ -96,7 +104,7 @@
 
       <section class="card output">
         <h2>4. Erzeugen & Download</h2>
-        <p class="hint">Das Dokument wird serverseitig erzeugt und automatisch heruntergeladen.</p>
+        <p class="hint">PDF wird mit verbessertem Business-Layout erzeugt.</p>
         <div class="actions">
           <button id="generateBtn" type="button">Dokument erzeugen</button>
           <span id="statusText"></span>

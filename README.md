@@ -1,27 +1,24 @@
 # Document Beautifier
 
-Web-Tool für DOCX-Whitepaper:
-- Dokument hochladen
-- Logo hochladen
-- Farben definieren
-- Vorlage wählen
-- **direkt im Tool DOCX erzeugen + herunterladen**
+Web-Tool fuer Whitepaper-Transformation:
+- DOCX Upload
+- optionales Logo
+- Farbdefinitionen
+- Template-Auswahl (`minimal`, `executive`, `bold`)
+- Ausgabe als **DOCX oder hochwertiges PDF**
 
-## Lokal testen (Frontend)
+## Live-Flow
+1. Dokument hochladen
+2. Design konfigurieren
+3. Output-Format waehlen (PDF/DOCX)
+4. Generieren -> Download startet direkt
 
-```bash
-cd "/Users/davidwegener/Desktop/Dokument-hübsch-Macher"
-python3 -m http.server 4310
-```
-
-Dann: `http://localhost:4310`
-
-## Lokal testen (CLI)
+## Lokale CLI-Nutzung
 
 ```bash
 python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.py" \
   "/ABSOLUTER/PFAD/input.docx" \
-  "/ABSOLUTER/PFAD/output_styled.docx" \
+  "/ABSOLUTER/PFAD/output_styled.pdf" \
   --template executive \
   --primary-color "#F50000" \
   --text-color "#111111" \
@@ -29,6 +26,11 @@ python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.p
   --logo "/ABSOLUTER/PFAD/logo.png"
 ```
 
-## Deploy auf Vercel
+## API
+`POST /api/style` (multipart/form-data)
+- `document` (.docx, required)
+- `logo` (optional)
+- `outputFormat`: `docx` | `pdf`
+- `template`, `primaryColor`, `textColor`, `orgName`, `outputName`
 
-Projekt ist auf Vercel für statisches Frontend + Python API (`/api/style`) vorbereitet.
+Antwort: Binardatei als Download.

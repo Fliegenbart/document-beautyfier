@@ -4,6 +4,7 @@ const docFileName = document.getElementById('docFileName');
 const logoFileName = document.getElementById('logoFileName');
 const logoPreview = document.getElementById('logoPreview');
 
+const outputFormat = document.getElementById('outputFormat');
 const outputName = document.getElementById('outputName');
 const orgName = document.getElementById('orgName');
 const primaryColor = document.getElementById('primaryColor');
@@ -33,6 +34,12 @@ function updateVisualTheme() {
   textColorLabel.textContent = textColor.value;
 }
 
+function ensureExtension(filename, ext) {
+  const dotExt = `.${ext}`;
+  if (filename.toLowerCase().endsWith(dotExt)) return filename;
+  return `${filename.replace(/\.[a-z0-9]+$/i, '')}${dotExt}`;
+}
+
 function updateFileLabels() {
   const doc = docFile.files?.[0];
   const logo = logoFile.files?.[0];
@@ -40,9 +47,15 @@ function updateFileLabels() {
   docFileName.textContent = doc ? doc.name : 'Keine Datei gewählt';
   logoFileName.textContent = logo ? logo.name : 'Kein Logo gewählt';
 
-  if (doc && (!outputName.value || outputName.value === 'document_styled.docx')) {
-    outputName.value = doc.name.replace(/\.docx$/i, '') + '_styled.docx';
+  if (doc && (!outputName.value || /document_styled\.(pdf|docx)/i.test(outputName.value))) {
+    const ext = outputFormat.value === 'pdf' ? 'pdf' : 'docx';
+    outputName.value = `${doc.name.replace(/\.docx$/i, '')}_styled.${ext}`;
   }
+}
+
+function updateOutputExtension() {
+  const ext = outputFormat.value === 'pdf' ? 'pdf' : 'docx';
+  outputName.value = ensureExtension(outputName.value.trim() || `document_styled.${ext}`, ext);
 }
 
 function updateLogoPreview() {
@@ -73,6 +86,7 @@ async function generateDocument() {
     return;
   }
 
+  const format = outputFormat.value;
   const form = new FormData();
   form.append('document', doc);
 
@@ -81,7 +95,8 @@ async function generateDocument() {
     form.append('logo', logo);
   }
 
-  form.append('outputName', outputName.value.trim() || 'document_styled.docx');
+  form.append('outputName', outputName.value.trim() || `document_styled.${format}`);
+  form.append('outputFormat', format);
   form.append('orgName', orgName.value.trim() || 'Your Organization');
   form.append('template', selectedTemplate());
   form.append('primaryColor', primaryColor.value);
@@ -108,17 +123,20 @@ async function generateDocument() {
     }
 
     const blob = await response.blob();
-    const downloadName = outputName.value.trim() || 'document_styled.docx';
+    const downloadName = ensureExtension(
+      outputName.value.trim() || `document_styled.${format}`,
+      format === 'pdf' ? 'pdf' : 'docx'
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = downloadName.toLowerCase().endsWith('.docx') ? downloadName : `${downloadName}.docx`;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
 
-    setStatus('Fertig. Download gestartet.');
+    setStatus(`Fertig. ${format.toUpperCase()} Download gestartet.`);
   } catch (error) {
     setStatus(error.message || 'Fehler bei der Verarbeitung.', true);
   } finally {
@@ -139,6 +157,11 @@ async function generateDocument() {
   })
 );
 
+outputFormat.addEventListener('change', () => {
+  updateOutputExtension();
+  updateFileLabels();
+});
+
 document.querySelectorAll('input[name="template"]').forEach((el) => {
   el.addEventListener('change', refreshTemplateCardState);
 });
@@ -149,3 +172,4 @@ updateVisualTheme();
 refreshTemplateCardState();
 updateFileLabels();
 updateLogoPreview();
+updateOutputExtension();

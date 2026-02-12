@@ -111,14 +111,16 @@ h2 {
   color: #383838;
 }
 
-.field input {
+.field input,
+.field select {
   border: 1px solid var(--line);
   border-radius: 11px;
   padding: 0.68rem 0.74rem;
   font: inherit;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 2px solid color-mix(in srgb, var(--accent) 24%, transparent);
   border-color: var(--accent);
 }
