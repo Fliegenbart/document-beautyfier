@@ -13,7 +13,7 @@ def main() -> None:
     parser.add_argument("output_file", type=Path, help="Output .docx or .pdf file")
     parser.add_argument("--logo", type=Path, default=None, help="Path to logo image (png/jpg).")
     parser.add_argument("--org-name", type=str, default="Your Organization")
-    parser.add_argument("--font", type=str, default="Helvetica")
+    parser.add_argument("--font", type=str, default="auto")
     parser.add_argument("--template", choices=sorted(TEMPLATES.keys()), default="executive")
     parser.add_argument("--primary-color", type=str, default="#F50000", help="Hex or RGB string, e.g. #F50000 or 245,0,0")
     parser.add_argument("--text-color", type=str, default="#111111", help="Hex or RGB string, e.g. #111111 or 17,17,17")
@@ -49,7 +49,7 @@ def main() -> None:
             output_docx=args.output_file,
             logo=args.logo,
             org_name=args.org_name,
-            font=args.font,
+            font="Calibri" if args.font.strip().lower() == "auto" else args.font,
             template=args.template,
             primary_color=args.primary_color,
             text_color=args.text_color,

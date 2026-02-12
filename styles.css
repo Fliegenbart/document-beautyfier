@@ -125,6 +125,11 @@ h2 {
   border-color: var(--accent);
 }
 
+.field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .upload input {
   padding: 0.56rem;
 }

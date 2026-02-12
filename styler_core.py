@@ -42,6 +42,8 @@ class TemplateConfig:
 class PdfThemeConfig:
     default_font: str
     cover_tagline: str
+    default_primary_hex: str
+    default_text_hex: str
     summary_fill_hex: str
     table_row_fill_a: str
     table_row_fill_b: str
@@ -59,6 +61,8 @@ PDF_THEMES = {
     "consulting": PdfThemeConfig(
         default_font="Helvetica",
         cover_tagline="Business Strategy Whitepaper",
+        default_primary_hex="D7263D",
+        default_text_hex="1A1A1A",
         summary_fill_hex="F6F8FB",
         table_row_fill_a="FFFFFF",
         table_row_fill_b="F6F8FA",
@@ -68,6 +72,8 @@ PDF_THEMES = {
     "technical": PdfThemeConfig(
         default_font="Helvetica",
         cover_tagline="Technical Whitepaper",
+        default_primary_hex="005A9C",
+        default_text_hex="132B43",
         summary_fill_hex="F3F7FC",
         table_row_fill_a="F9FBFE",
         table_row_fill_b="EDF4FB",
@@ -77,6 +83,8 @@ PDF_THEMES = {
     "regulatory": PdfThemeConfig(
         default_font="Times-Roman",
         cover_tagline="Regulatory Assessment Whitepaper",
+        default_primary_hex="6E4C2C",
+        default_text_hex="2A221C",
         summary_fill_hex="FAF7F2",
         table_row_fill_a="FFFEFC",
         table_row_fill_b="F7F1E9",
@@ -462,12 +470,120 @@ def _reading_width_points(body_size_pt: float, reading_width_ch: int) -> float:
     return body_size_pt * reading_width_ch * 0.52
 
 
+def _render_cover(story, title: str, org_name: str, logo: Path | None, rl_doc, cfg: TemplateConfig, theme: PdfThemeConfig, styles, primary):
+    if theme.cover_tagline.startswith("Business"):
+        # Consulting: centered, clean with strong accent rule.
+        story.append(Spacer(1, 1.2 * cm))
+        if logo and logo.exists():
+            story.append(Image(str(logo), width=cfg.logo_width_cm * cm, hAlign="CENTER"))
+            story.append(Spacer(1, 0.8 * cm))
+        story.append(Paragraph(theme.cover_tagline, styles["cover_tagline"]))
+        story.append(Paragraph(title, styles["cover_title"]))
+        story.append(Paragraph(org_name, styles["cover_sub"]))
+        story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
+        story.append(Spacer(1, 0.9 * cm))
+        story.append(
+            Table(
+                [[" "]],
+                colWidths=[rl_doc.width],
+                rowHeights=[theme.cover_rule_height_cm * cm],
+                style=[("BACKGROUND", (0, 0), (-1, -1), primary), ("LINEBELOW", (0, 0), (-1, -1), 0, primary)],
+            )
+        )
+        story.append(PageBreak())
+        return
+
+    if theme.cover_tagline.startswith("Technical"):
+        # Technical: left-aligned hero with compact metadata.
+        story.append(Spacer(1, 0.9 * cm))
+        if logo and logo.exists():
+            story.append(Image(str(logo), width=(cfg.logo_width_cm - 1.0) * cm, hAlign="LEFT"))
+            story.append(Spacer(1, 0.6 * cm))
+        story.append(Paragraph(theme.cover_tagline, styles["h3"]))
+        story.append(Paragraph(title, styles["cover_title"]))
+        meta = Table(
+            [
+                ["Organization", org_name],
+                ["Date", date.today().strftime("%B %d, %Y")],
+                ["Profile", "Technical Documentation"],
+            ],
+            colWidths=[rl_doc.width * 0.25, rl_doc.width * 0.75],
+            style=[
+                ("BACKGROUND", (0, 0), (0, -1), primary),
+                ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#B5C2CF")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ],
+        )
+        story.append(Spacer(1, 0.4 * cm))
+        story.append(meta)
+        story.append(Spacer(1, 0.6 * cm))
+        story.append(
+            Table(
+                [[" "]],
+                colWidths=[rl_doc.width],
+                rowHeights=[theme.cover_rule_height_cm * cm],
+                style=[("BACKGROUND", (0, 0), (-1, -1), primary)],
+            )
+        )
+        story.append(PageBreak())
+        return
+
+    # Regulatory: formal title block.
+    story.append(Spacer(1, 1.0 * cm))
+    story.append(
+        Table(
+            [[Paragraph("Regulatory Whitepaper", styles["cover_tagline"])]],
+            colWidths=[rl_doc.width],
+            style=[
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F3EEE6")),
+                ("BOX", (0, 0), (-1, -1), 0.8, primary),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ],
+        )
+    )
+    story.append(Spacer(1, 0.65 * cm))
+    story.append(Paragraph(title, styles["cover_title"]))
+    story.append(Paragraph(org_name, styles["cover_sub"]))
+    story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
+    if logo and logo.exists():
+        story.append(Spacer(1, 0.5 * cm))
+        story.append(Image(str(logo), width=(cfg.logo_width_cm - 0.4) * cm, hAlign="CENTER"))
+    story.append(Spacer(1, 0.8 * cm))
+    story.append(
+        Table(
+            [["Confidential - Prepared for internal quality and compliance stakeholders"]],
+            colWidths=[rl_doc.width],
+            style=[
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FBF8F3")),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#65584B")),
+                ("BOX", (0, 0), (-1, -1), 0.4, colors.HexColor("#D7CCBF")),
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ],
+        )
+    )
+    story.append(PageBreak())
+
+
 def apply_style_pdf(
     input_docx: Path,
     output_pdf: Path,
     logo: Path | None = None,
     org_name: str = "Your Organization",
-    font: str = "Helvetica",
+    font: str = "auto",
     pdf_theme: str = "consulting",
     template: str = "executive",
     primary_color: str = "#F50000",
@@ -481,10 +597,14 @@ def apply_style_pdf(
     if pdf_theme not in PDF_THEMES:
         raise ValueError(f"Unsupported pdf_theme: {pdf_theme}")
 
-    primary_hex = normalize_color_string(primary_color)
-    text_hex = normalize_color_string(text_color)
-    cfg = TEMPLATES[template]
     theme = PDF_THEMES[pdf_theme]
+    cfg = TEMPLATES[template]
+    primary_hex = theme.default_primary_hex
+    text_hex = theme.default_text_hex
+    if primary_color and primary_color.strip() and primary_color.strip().lower() not in {"", "auto"}:
+        primary_hex = normalize_color_string(primary_color)
+    if text_color and text_color.strip() and text_color.strip().lower() not in {"", "auto"}:
+        text_hex = normalize_color_string(text_color)
 
     doc = Document(str(input_docx))
     title = _extract_doc_title(doc)
@@ -493,7 +613,7 @@ def apply_style_pdf(
     if line_spacing < 1.4 or line_spacing > 2.0:
         raise ValueError("line_spacing should be between 1.4 and 2.0.")
 
-    selected_font = font or theme.default_font
+    selected_font = theme.default_font if (not font or font.strip().lower() == "auto") else font
     styles = _build_pdf_styles(selected_font, primary_hex, text_hex, cfg, line_spacing, theme)
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
@@ -516,25 +636,7 @@ def apply_style_pdf(
     primary = HexColor(f"#{primary_hex}")
     story = []
 
-    # Cover
-    story.append(Spacer(1, 1.4 * cm))
-    if logo and logo.exists():
-        story.append(Image(str(logo), width=cfg.logo_width_cm * cm, hAlign="CENTER"))
-        story.append(Spacer(1, 0.8 * cm))
-    story.append(Paragraph(theme.cover_tagline, styles["cover_tagline"]))
-    story.append(Paragraph(title, styles["cover_title"]))
-    story.append(Paragraph(org_name, styles["cover_sub"]))
-    story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
-    story.append(Spacer(1, 0.8 * cm))
-    story.append(
-        Table(
-            [[" "]],
-            colWidths=[rl_doc.width],
-            rowHeights=[theme.cover_rule_height_cm * cm],
-            style=[("BACKGROUND", (0, 0), (-1, -1), primary), ("LINEBELOW", (0, 0), (-1, -1), 0, primary)],
-        )
-    )
-    story.append(PageBreak())
+    _render_cover(story, title, org_name, logo, rl_doc, cfg, theme, styles, primary)
 
     if include_summary_page:
         summary = _summary_text(doc)

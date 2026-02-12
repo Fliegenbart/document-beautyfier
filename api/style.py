@@ -34,7 +34,7 @@ def style_document():
     primary_color = request.form.get("primaryColor", "#F50000")
     text_color = request.form.get("textColor", "#111111")
     org_name = request.form.get("orgName", "Your Organization")
-    font = request.form.get("font", "Helvetica")
+    font = request.form.get("font", "auto")
     line_spacing = float(request.form.get("lineSpacing", "1.55"))
     reading_width_ch = int(request.form.get("readingWidthCh", "72"))
     include_summary_page = request.form.get("includeSummaryPage", "true").lower() != "false"

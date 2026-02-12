@@ -12,6 +12,8 @@ Web-Tool fuer Whitepaper-Transformation:
   - grosser Zeilenabstand fuer Lesbarkeit
   - Executive Summary + Inhaltsuebersicht Seite
   - konsistente Header/Footer und Seitenzahlen
+  - feste Corporate-Farbpalette je PDF-Theme
+  - eigenes Cover-Layout je PDF-Theme
 
 ## Live-Flow
 1. Dokument hochladen

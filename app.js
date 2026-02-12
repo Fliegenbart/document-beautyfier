@@ -59,7 +59,10 @@ function updateFileLabels() {
 
 function updateOutputExtension() {
   const ext = outputFormat.value === 'pdf' ? 'pdf' : 'docx';
+  const pdfMode = outputFormat.value === 'pdf';
   pdfTheme.disabled = outputFormat.value !== 'pdf';
+  primaryColor.disabled = pdfMode;
+  textColor.disabled = pdfMode;
   outputName.value = ensureExtension(outputName.value.trim() || `document_styled.${ext}`, ext);
 }
 
@@ -105,8 +108,8 @@ async function generateDocument() {
   form.append('pdfTheme', pdfTheme.value || 'consulting');
   form.append('orgName', orgName.value.trim() || 'Your Organization');
   form.append('template', selectedTemplate());
-  form.append('primaryColor', primaryColor.value);
-  form.append('textColor', textColor.value);
+  form.append('primaryColor', format === 'pdf' ? 'auto' : primaryColor.value);
+  form.append('textColor', format === 'pdf' ? 'auto' : textColor.value);
   form.append('lineSpacing', lineSpacing.value || '1.55');
   form.append('readingWidthCh', readingWidthCh.value || '72');
   form.append('includeSummaryPage', includeSummaryPage.checked ? 'true' : 'false');
