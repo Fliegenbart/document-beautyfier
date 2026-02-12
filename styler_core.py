@@ -22,6 +22,7 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
@@ -470,12 +471,30 @@ def _reading_width_points(body_size_pt: float, reading_width_ch: int) -> float:
     return body_size_pt * reading_width_ch * 0.52
 
 
+def _logo_image_flowable(logo: Path, max_width_cm: float, max_height_cm: float, align: str = "CENTER") -> Image:
+    img_reader = ImageReader(str(logo))
+    px_w, px_h = img_reader.getSize()
+    if px_w <= 0 or px_h <= 0:
+        return Image(str(logo), width=max_width_cm * cm, hAlign=align)
+
+    width_pt = max_width_cm * cm
+    height_pt = width_pt * (px_h / px_w)
+    max_height_pt = max_height_cm * cm
+
+    if height_pt > max_height_pt:
+        scale = max_height_pt / height_pt
+        width_pt *= scale
+        height_pt = max_height_pt
+
+    return Image(str(logo), width=width_pt, height=height_pt, hAlign=align)
+
+
 def _render_cover(story, title: str, org_name: str, logo: Path | None, rl_doc, cfg: TemplateConfig, theme: PdfThemeConfig, styles, primary):
     if theme.cover_tagline.startswith("Business"):
         # Consulting: centered, clean with strong accent rule.
         story.append(Spacer(1, 1.2 * cm))
         if logo and logo.exists():
-            story.append(Image(str(logo), width=cfg.logo_width_cm * cm, hAlign="CENTER"))
+            story.append(_logo_image_flowable(logo, max_width_cm=cfg.logo_width_cm, max_height_cm=2.8, align="CENTER"))
             story.append(Spacer(1, 0.8 * cm))
         story.append(Paragraph(theme.cover_tagline, styles["cover_tagline"]))
         story.append(Paragraph(title, styles["cover_title"]))
@@ -497,7 +516,9 @@ def _render_cover(story, title: str, org_name: str, logo: Path | None, rl_doc, c
         # Technical: left-aligned hero with compact metadata.
         story.append(Spacer(1, 0.9 * cm))
         if logo and logo.exists():
-            story.append(Image(str(logo), width=(cfg.logo_width_cm - 1.0) * cm, hAlign="LEFT"))
+            story.append(
+                _logo_image_flowable(logo, max_width_cm=(cfg.logo_width_cm - 1.0), max_height_cm=2.4, align="LEFT")
+            )
             story.append(Spacer(1, 0.6 * cm))
         story.append(Paragraph(theme.cover_tagline, styles["h3"]))
         story.append(Paragraph(title, styles["cover_title"]))
@@ -556,7 +577,7 @@ def _render_cover(story, title: str, org_name: str, logo: Path | None, rl_doc, c
     story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
     if logo and logo.exists():
         story.append(Spacer(1, 0.5 * cm))
-        story.append(Image(str(logo), width=(cfg.logo_width_cm - 0.4) * cm, hAlign="CENTER"))
+        story.append(_logo_image_flowable(logo, max_width_cm=(cfg.logo_width_cm - 0.4), max_height_cm=2.6, align="CENTER"))
     story.append(Spacer(1, 0.8 * cm))
     story.append(
         Table(
