@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
@@ -248,6 +249,7 @@ def apply_style(
     template: str = "executive",
     primary_color: str = "#F50000",
     text_color: str = "#111111",
+    line_spacing: float = 1.5,
 ) -> None:
     if template not in TEMPLATES:
         raise ValueError(f"Unsupported template: {template}")
@@ -262,7 +264,18 @@ def apply_style(
 
     style_named_styles(doc, font, text_rgb, primary_rgb, cfg)
     ensure_custom_styles(doc, font, primary_rgb, cfg.body_size)
-    style_paragraphs(doc, font, text_rgb, primary_rgb, cfg)
+    cfg_for_docx = TemplateConfig(
+        margin_cm=cfg.margin_cm,
+        body_size=cfg.body_size,
+        h1_size=cfg.h1_size,
+        h2_size=cfg.h2_size,
+        h3_size=cfg.h3_size,
+        title_size=cfg.title_size,
+        line_spacing=max(cfg.line_spacing, line_spacing),
+        header_line_size=cfg.header_line_size,
+        logo_width_cm=cfg.logo_width_cm,
+    )
+    style_paragraphs(doc, font, text_rgb, primary_rgb, cfg_for_docx)
     style_tables(doc, font, text_rgb, primary_hex)
     style_sections_and_header(doc, logo, org_name, font, text_rgb, primary_hex, cfg)
 
@@ -286,7 +299,7 @@ def _extract_doc_title(doc: Document) -> str:
     return "Styled Document"
 
 
-def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateConfig):
+def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateConfig, line_spacing: float):
     primary = HexColor(f"#{primary_hex}")
     text = HexColor(f"#{text_hex}")
     sheet = getSampleStyleSheet()
@@ -326,9 +339,9 @@ def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateC
             parent=sheet["BodyText"],
             fontName=font,
             fontSize=cfg.body_size,
-            leading=cfg.body_size * 1.45,
+            leading=cfg.body_size * line_spacing,
             textColor=text,
-            spaceAfter=5,
+            spaceAfter=max(6, cfg.body_size * 0.72),
         ),
         "cover_title": ParagraphStyle(
             "cover_title",
@@ -358,6 +371,40 @@ def _build_pdf_styles(font: str, primary_hex: str, text_hex: str, cfg: TemplateC
     }
 
 
+def _heading_list(doc: Document) -> list[str]:
+    headings: list[str] = []
+    for p in doc.paragraphs:
+        text = (p.text or "").strip()
+        if not text:
+            continue
+        style_name = (p.style.name or "").lower()
+        if "heading 1" in style_name or "heading 2" in style_name:
+            headings.append(text)
+    return headings[:14]
+
+
+def _summary_text(doc: Document) -> str:
+    chunks: list[str] = []
+    for p in doc.paragraphs:
+        text = " ".join((p.text or "").split()).strip()
+        if not text:
+            continue
+        style_name = (p.style.name or "").lower()
+        if "heading" in style_name:
+            continue
+        chunks.append(text)
+        if len(" ".join(chunks)) > 520:
+            break
+    if not chunks:
+        return "This whitepaper outlines the business challenge, supporting context, and a practical solution path."
+    return " ".join(chunks)[:650]
+
+
+def _reading_width_points(body_size_pt: float, reading_width_ch: int) -> float:
+    # Approximate average character width in points for business sans-serif fonts.
+    return body_size_pt * reading_width_ch * 0.52
+
+
 def apply_style_pdf(
     input_docx: Path,
     output_pdf: Path,
@@ -367,6 +414,9 @@ def apply_style_pdf(
     template: str = "executive",
     primary_color: str = "#F50000",
     text_color: str = "#111111",
+    reading_width_ch: int = 72,
+    line_spacing: float = 1.55,
+    include_summary_page: bool = True,
 ) -> None:
     if template not in TEMPLATES:
         raise ValueError(f"Unsupported template: {template}")
@@ -377,18 +427,28 @@ def apply_style_pdf(
 
     doc = Document(str(input_docx))
     title = _extract_doc_title(doc)
-    styles = _build_pdf_styles(font, primary_hex, text_hex, cfg)
+    if reading_width_ch < 50 or reading_width_ch > 80:
+        raise ValueError("reading_width_ch must be between 50 and 80.")
+    if line_spacing < 1.4 or line_spacing > 2.0:
+        raise ValueError("line_spacing should be between 1.4 and 2.0.")
+
+    styles = _build_pdf_styles(font, primary_hex, text_hex, cfg, line_spacing)
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
-    margin = cfg.margin_cm * cm
+    base_margin = cfg.margin_cm * cm
+    frame_max_width = _reading_width_points(cfg.body_size, reading_width_ch)
+    usable_width = A4[0] - (2 * base_margin)
+    frame_width = min(usable_width, frame_max_width)
+    side_margin = (A4[0] - frame_width) / 2
+
     rl_doc = SimpleDocTemplate(
         str(output_pdf),
         pagesize=A4,
-        leftMargin=margin,
-        rightMargin=margin,
-        topMargin=margin,
-        bottomMargin=margin,
+        leftMargin=side_margin,
+        rightMargin=side_margin,
+        topMargin=base_margin,
+        bottomMargin=base_margin,
     )
 
     primary = HexColor(f"#{primary_hex}")
@@ -401,6 +461,7 @@ def apply_style_pdf(
         story.append(Spacer(1, 0.8 * cm))
     story.append(Paragraph(title, styles["cover_title"]))
     story.append(Paragraph(org_name, styles["cover_sub"]))
+    story.append(Paragraph(date.today().strftime("%B %d, %Y"), styles["cover_sub"]))
     story.append(Spacer(1, 0.8 * cm))
     story.append(
         Table(
@@ -411,6 +472,30 @@ def apply_style_pdf(
         )
     )
     story.append(PageBreak())
+
+    if include_summary_page:
+        summary = _summary_text(doc)
+        heads = _heading_list(doc)
+        story.append(Paragraph("Executive Summary", styles["h1"]))
+        summary_box = Table(
+            [[Paragraph(summary, styles["body"])]],
+            colWidths=[rl_doc.width],
+            style=[
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F6F6F6")),
+                ("BOX", (0, 0), (-1, -1), 0.8, primary),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ],
+        )
+        story.append(summary_box)
+        story.append(Spacer(1, 0.5 * cm))
+        if heads:
+            story.append(Paragraph("Contents", styles["h2"]))
+            for heading in heads:
+                story.append(Paragraph(f"- {heading}", styles["body"]))
+        story.append(PageBreak())
 
     # Content
     for item in _iter_block_items(doc):

@@ -18,6 +18,9 @@ def main() -> None:
     parser.add_argument("--primary-color", type=str, default="#F50000", help="Hex or RGB string, e.g. #F50000 or 245,0,0")
     parser.add_argument("--text-color", type=str, default="#111111", help="Hex or RGB string, e.g. #111111 or 17,17,17")
     parser.add_argument("--output-format", choices=["docx", "pdf"], default=None)
+    parser.add_argument("--line-spacing", type=float, default=1.55)
+    parser.add_argument("--reading-width-ch", type=int, default=72)
+    parser.add_argument("--no-summary-page", action="store_true")
     args = parser.parse_args()
 
     output_format = args.output_format
@@ -34,6 +37,9 @@ def main() -> None:
             template=args.template,
             primary_color=args.primary_color,
             text_color=args.text_color,
+            reading_width_ch=args.reading_width_ch,
+            line_spacing=args.line_spacing,
+            include_summary_page=not args.no_summary_page,
         )
     else:
         apply_style(
@@ -45,6 +51,7 @@ def main() -> None:
             template=args.template,
             primary_color=args.primary_color,
             text_color=args.text_color,
+            line_spacing=args.line_spacing,
         )
 
 

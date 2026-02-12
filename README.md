@@ -6,6 +6,11 @@ Web-Tool fuer Whitepaper-Transformation:
 - Farbdefinitionen
 - Template-Auswahl (`minimal`, `executive`, `bold`)
 - Ausgabe als **DOCX oder hochwertiges PDF**
+- Best-practice Defaults:
+  - Lesebreite fuer Fliesstext (ca. 72 Zeichen)
+  - grosser Zeilenabstand fuer Lesbarkeit
+  - Executive Summary + Inhaltsuebersicht Seite
+  - konsistente Header/Footer und Seitenzahlen
 
 ## Live-Flow
 1. Dokument hochladen
@@ -32,5 +37,6 @@ python3 "/Users/davidwegener/Desktop/Dokument-hübsch-Macher/style_whitepaper.p
 - `logo` (optional)
 - `outputFormat`: `docx` | `pdf`
 - `template`, `primaryColor`, `textColor`, `orgName`, `outputName`
+- `lineSpacing`, `readingWidthCh`, `includeSummaryPage`
 
 Antwort: Binardatei als Download.

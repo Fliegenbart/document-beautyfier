@@ -7,6 +7,9 @@ const logoPreview = document.getElementById('logoPreview');
 const outputFormat = document.getElementById('outputFormat');
 const outputName = document.getElementById('outputName');
 const orgName = document.getElementById('orgName');
+const lineSpacing = document.getElementById('lineSpacing');
+const readingWidthCh = document.getElementById('readingWidthCh');
+const includeSummaryPage = document.getElementById('includeSummaryPage');
 const primaryColor = document.getElementById('primaryColor');
 const textColor = document.getElementById('textColor');
 const primaryColorLabel = document.getElementById('primaryColorLabel');
@@ -101,6 +104,9 @@ async function generateDocument() {
   form.append('template', selectedTemplate());
   form.append('primaryColor', primaryColor.value);
   form.append('textColor', textColor.value);
+  form.append('lineSpacing', lineSpacing.value || '1.55');
+  form.append('readingWidthCh', readingWidthCh.value || '72');
+  form.append('includeSummaryPage', includeSummaryPage.checked ? 'true' : 'false');
 
   generateBtn.disabled = true;
   setStatus('Erzeuge Dokument...');

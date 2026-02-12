@@ -35,6 +35,9 @@ def style_document():
     text_color = request.form.get("textColor", "#111111")
     org_name = request.form.get("orgName", "Your Organization")
     font = request.form.get("font", "Helvetica")
+    line_spacing = float(request.form.get("lineSpacing", "1.55"))
+    reading_width_ch = int(request.form.get("readingWidthCh", "72"))
+    include_summary_page = request.form.get("includeSummaryPage", "true").lower() != "false"
     output_format = request.form.get("outputFormat", "docx").lower().strip()
     if output_format not in {"docx", "pdf"}:
         return jsonify({"error": "outputFormat must be 'docx' or 'pdf'."}), 400
@@ -66,6 +69,9 @@ def style_document():
                     template=template,
                     primary_color=primary_color,
                     text_color=text_color,
+                    reading_width_ch=reading_width_ch,
+                    line_spacing=line_spacing,
+                    include_summary_page=include_summary_page,
                 )
             else:
                 apply_style(
@@ -77,6 +83,7 @@ def style_document():
                     template=template,
                     primary_color=primary_color,
                     text_color=text_color,
+                    line_spacing=line_spacing,
                 )
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": str(exc)}), 400
